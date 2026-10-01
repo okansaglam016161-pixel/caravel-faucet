@@ -1,0 +1,16 @@
+# Rust build output
+target/
+**/target/
+
+# logs
+*.log
+
+# local secrets — wallet daemon API keys and env exports. NEVER commit.
+.tari-env
+*.env
+.env*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

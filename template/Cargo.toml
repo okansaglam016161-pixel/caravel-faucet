@@ -1,0 +1,60 @@
+[package]
+name = "caravel_faucet"
+version = "0.1.0"
+authors = ["Okz"]
+edition = "2024"
+# description / license / repository are read into the PUBLISHED template metadata by
+# tari_ootle_template_build. They are baked in at publish time and a correction costs a new
+# template address, so they are filled in before the first publish.
+description = "A testnet TARI faucet: a fixed amount per claim, one claim per public key proven by that key's signature, admin-controlled amount, pause and withdrawal. Anyone can deposit."
+license = "MIT"
+repository = "https://github.com/okansaglam016161-pixel/caravel-faucet"
+
+[package.metadata.tari-template]
+tags = ["faucet", "testnet", "tari", "caravel"]
+category = "utility"
+documentation = "https://github.com/okansaglam016161-pixel/caravel-faucet#readme"
+homepage = "https://github.com/okansaglam016161-pixel/caravel-faucet"
+# commit_hash is set at publish time to the commit whose source produced the published WASM
+# (it reaches only the metadata CBOR, never the binary).
+
+[dependencies]
+tari_template_lib = { version = "0.33" }
+
+[dev-dependencies]
+tari_template_test_tooling = "0.42"
+
+[lib]
+crate-type = ["cdylib"]
+
+[build-dependencies]
+tari_ootle_template_build = "0.13"
+
+# Size optimisations for the published WASM — the same profile `tari build` / `tari publish` pass,
+# so a plain `cargo build --release` produces the same binary. The publish fee is priced on size.
+[profile.release]
+opt-level = 's'
+lto = true
+codegen-units = 1
+panic = 'abort'
+strip = true
+
+# Wasmer + Cranelift are very slow unoptimised, which makes the template tests ~10x slower.
+# Optimise just those crates in dev/test builds; our own code stays debuggable.
+[profile.dev.package.wasmer]
+opt-level = 2
+
+[profile.dev.package.wasmer-compiler]
+opt-level = 2
+
+[profile.dev.package.wasmer-compiler-cranelift]
+opt-level = 2
+
+[profile.dev.package.cranelift-codegen]
+opt-level = 2
+
+[profile.dev.package.cranelift-frontend]
+opt-level = 2
+
+[profile.dev.package.cranelift-entity]
+opt-level = 2
