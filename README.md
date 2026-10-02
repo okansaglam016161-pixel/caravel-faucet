@@ -96,7 +96,19 @@ Published on **esmeralda** on 2026-10-02 (epoch 11752).
 The on-chain binary is the release WASM after two `wasm-opt` passes: one by `tari publish`, one by
 the wallet daemon. It is not byte-identical to the `cargo build` output.
 
-No faucet component has been instantiated yet: `new()` has not been called.
+### The faucet
+
+| | |
+|---|---|
+| Component | `component_568f84a0cc7ccfe49116ee86d072f02b99e246a4750e680a8cbfcd2b7862f37b` |
+| Transaction | `d437f79d70677a090e5a7b41b94924a94e33d3d22feaa8a16cacafdb92e6d868` — Commit / Accept |
+| Fee | 2,466 µT |
+| Claim amount | 1,000 tTARI (1,000,000,000 µT) |
+| Owner (admin key) | `20db90bffb62905d14b75369de9de8523d859bdec5f75e36929fbf9099781661` |
+| Withdrawals go to | `component_4c7dddbe61ec6e77430cc4398535d29e127c1f6d46be4500ce8f2ab164e422bc` |
+
+Created with [`scripts/instantiate.py`](scripts/instantiate.py), which dry-runs `new()` before submitting
+it and requires a final Accept. It started empty and unpaused.
 
 ## License
 
