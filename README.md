@@ -110,6 +110,9 @@ the wallet daemon. It is not byte-identical to the `cargo build` output.
 Created with [`scripts/instantiate.py`](scripts/instantiate.py), which dry-runs `new()` before submitting
 it and requires a final Accept. It started empty and unpaused.
 
+**Funding:** 100,000 tTARI deposited from the deployer account on 2026-10-02, tx
+`0fae01fec6b8d15df1b0e2898ba07efac45427d2e345fa0bf386a0ff15dbb487` (Commit / Accept, fee 2,016 µT).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
