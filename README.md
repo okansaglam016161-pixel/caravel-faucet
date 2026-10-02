@@ -80,9 +80,23 @@ cargo test                                              # local logic tests
 cargo build --release --target wasm32-unknown-unknown   # the WASM to publish
 ```
 
-## Deployment
+## Live deployment — Ootle 0.42
 
-Not published yet.
+Published on **esmeralda** on 2026-10-02 (epoch 11752).
+
+| | |
+|---|---|
+| Template | `template_931854cae8c2fe2bad48fdc4aaaa618dd6abadc56012a0d7092d939aa3eff32e` |
+| Transaction | `660614bcfbe81e0d461a30b5d9a209ca3d56cf6e1686bd137733c4682b7ee222` — Commit / Accept |
+| Fee | 848,187 µT (0.848187 tTARI) |
+| Source | commit [`8514c95`](https://github.com/okansaglam016161-pixel/caravel-faucet/commit/8514c95dec1139031d77eff9d6aace26df850f63) |
+| Metadata hash | `1220dae9e1358fe151496c47320a165f49f77706f575858a4a4c59ffbf18d1b2960f` |
+| On-chain binary | 123,807 bytes, sha256 `2af2fb3136202384f04cc005b5713e363eddd51fd5f07ee5baf83e2bba561fd8` |
+
+The on-chain binary is the release WASM after two `wasm-opt` passes: one by `tari publish`, one by
+the wallet daemon. It is not byte-identical to the `cargo build` output.
+
+No faucet component has been instantiated yet: `new()` has not been called.
 
 ## License
 
