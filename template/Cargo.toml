@@ -15,8 +15,9 @@ tags = ["faucet", "testnet", "tari", "caravel"]
 category = "utility"
 documentation = "https://github.com/okansaglam016161-pixel/caravel-faucet#readme"
 homepage = "https://github.com/okansaglam016161-pixel/caravel-faucet"
-# commit_hash is set at publish time to the commit whose source produced the published WASM
-# (it reaches only the metadata CBOR, never the binary).
+# The commit whose source produced the published WASM (it reaches only the metadata CBOR, never
+# the binary). Must be the full 40-hex SHA.
+commit_hash = "8514c95dec1139031d77eff9d6aace26df850f63"
 
 [dependencies]
 tari_template_lib = { version = "0.33" }
