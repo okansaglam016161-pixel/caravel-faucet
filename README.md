@@ -69,6 +69,30 @@ account.
 Anyone can top it up with a transaction that withdraws TARI from their account and calls
 `faucet.deposit(bucket)`.
 
+## Used by Caravel
+
+[Caravel](https://github.com/okansaglam016161-pixel/caravel) offers this faucet to its wallets as
+"Claim test funds" — its only faucet; Tari's built-in faucet is not used.
+
+### How Caravel claims
+
+- **Claim → private coin.** One transaction, exactly the recipe above: the payout becomes a private
+  coin in the wallet, with no account component created.
+- **The fee comes from the claim.** A wallet with a zero balance can claim; it receives
+  `claim_amount − fee` (about 999.987 tTARI at 1,000 per claim). The fee is priced by a dry run
+  first, and a refused claim — already claimed, paused, empty — is caught there, before anything is
+  submitted.
+- **One per key.** The claim is signed by, and names, the wallet's own key, so each wallet claims once.
+- **Status is read from the chain**, never guessed from a balance: the faucet component (claim
+  amount, paused), its vault (what is left), and the wallet's receipt NFT
+  (`nft_<receipts resource>_uuid_<public key>` — present once the key has claimed, even though the
+  NFT is burnt). Caravel shows the claim when the faucet is open, "check back soon" when it is paused
+  or empty, and nothing once the wallet has claimed.
+
+The code is in Caravel's
+[`src/crypto/faucet.ts`](https://github.com/okansaglam016161-pixel/caravel/blob/ootle-0.42/src/crypto/faucet.ts)
+and [`src/crypto/faucetStatus.ts`](https://github.com/okansaglam016161-pixel/caravel/blob/ootle-0.42/src/crypto/faucetStatus.ts).
+
 ## Build & test
 
 The template is in [`template/`](template/), pinned to the Ootle 0.42 crate set (`tari_template_lib`
