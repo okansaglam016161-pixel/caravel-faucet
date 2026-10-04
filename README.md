@@ -256,8 +256,9 @@ and [`src/crypto/faucetStatus.ts`](https://github.com/okansaglam016161-pixel/car
 
 ## Build & test
 
-The template is in [`template/`](template/), pinned to the Ootle 0.42 crate set (`tari_template_lib`
-0.33, `tari_ootle_template_build` 0.13, `tari_template_test_tooling` 0.42).
+The template is in [`template/`](template/), built with `tari_template_lib`
+0.33 and `tari_ootle_template_build` 0.13, and tested with the Ootle 0.43 test tooling
+(`tari_template_test_tooling` 0.43).
 
 ```bash
 cd template
@@ -265,7 +266,7 @@ cargo test                                              # local logic tests
 cargo build --release --target wasm32-unknown-unknown   # the WASM to publish
 ```
 
-## Live deployment — Ootle 0.42
+## Live deployment — published on Ootle 0.42, running on 0.43 (re-verified live on 0.43)
 
 Published on **esmeralda** on 2026-10-02 (epoch 11752).
 
