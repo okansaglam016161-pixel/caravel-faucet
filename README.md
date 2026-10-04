@@ -25,6 +25,167 @@ number of claims. (This is the same pattern Tari's builtin faucet uses.)
 Keys are free to create, so "one claim per key" limits each wallet, not each person. Keep the
 faucet's balance sized for that.
 
+## Use it from your app
+
+No sign-up or API key needed. Testnet only; may be paused or refilled.
+
+- **1,000 tTARI per claim**, paid as a **private** coin to the claiming wallet.
+- **One claim per wallet key, across all apps.** The faucet is shared: a key that claimed through
+  Caravel or any other app cannot claim again here.
+- **Zero-balance wallets can claim.** The fee (about 0.013 tTARI) comes out of the claim.
+- **A refused claim costs nothing.** The dry run catches it before anything is submitted.
+
+| | esmeralda |
+|---|---|
+| Template | `template_931854cae8c2fe2bad48fdc4aaaa618dd6abadc56012a0d7092d939aa3eff32e` |
+| Component | `component_568f84a0cc7ccfe49116ee86d072f02b99e246a4750e680a8cbfcd2b7862f37b` |
+| Vault | `vault_56c3c95ef08e843656e755100345d8fa0bf0a58853b40cd9d2894ab48a112ec6` |
+| Receipt resource | `resource_5694c70e0eaa25809e593c2f4ee85862b3fa71ea45d9ad01bf18f8accf35d621` |
+
+Refusals, as they appear in the dry run's reject reason:
+
+| reason contains | meaning |
+|---|---|
+| `Duplicate NFT token id` | this key has already claimed |
+| `Faucet is paused` | claims are switched off for now |
+| `Faucet is empty` | less than one claim is left |
+| `unknown or out of scope signer badge` | the transaction was not signed by the claiming key |
+
+TypeScript, `@tari-project/ootle` 0.7 (type-checked against the SDK, and the status read and dry run
+checked live from a fresh empty wallet):
+
+```ts
+// Caravel Faucet — status + claim, for any dapp on Ootle esmeralda.
+// npm i @tari-project/ootle@^0.7 @tari-project/ootle-indexer@^0.7 @tari-project/ootle-secret-key-wallet@^0.7
+import {
+  Mask, Network, StealthTransferStatement, TARI_RESOURCE_ADDRESS, TransactionBuilder, WasmStealthCrypto,
+  createOutput, publicKeyLiteral, resolveMaxEpoch, sealTransaction, signBalanceProof, signTransaction,
+  stealthTransferInstruction,
+} from '@tari-project/ootle'
+import { IndexerProvider } from '@tari-project/ootle-indexer'
+import type { SecretKeyWallet } from '@tari-project/ootle-secret-key-wallet'
+
+const INDEXER = 'https://ootle-indexer-b.tari.com' // or https://ootle-indexer-a.tari.com
+const FAUCET = 'component_568f84a0cc7ccfe49116ee86d072f02b99e246a4750e680a8cbfcd2b7862f37b'
+const VAULT = 'vault_56c3c95ef08e843656e755100345d8fa0bf0a58853b40cd9d2894ab48a112ec6'
+const RECEIPTS = 'resource_5694c70e0eaa25809e593c2f4ee85862b3fa71ea45d9ad01bf18f8accf35d621'
+
+const hex = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('')
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+async function read(path: string): Promise<any | null> {
+  const res = await fetch(INDEXER + path)
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`)
+  return res.json()
+}
+
+export type FaucetStatus =
+  | { kind: 'claimed' }
+  | { kind: 'paused'; claimAmount: bigint }
+  | { kind: 'empty'; claimAmount: bigint; available: bigint }
+  | { kind: 'open'; claimAmount: bigint; available: bigint }
+
+/** Three reads, no transaction. `ownerPk` is the claiming wallet's public key (`wallet.getPublicKey()`). */
+export async function faucetStatus(ownerPk: Uint8Array): Promise<FaucetStatus> {
+  const [component, vault, receipt] = await Promise.all([
+    read(`/substates/${FAUCET}`),
+    read(`/substates/${VAULT}`),
+    // One receipt NFT per key, burnt on claim but still found: it exists once the key has claimed.
+    read(`/substates/nft_${RECEIPTS.slice('resource_'.length)}_uuid_${hex(ownerPk)}`),
+  ])
+  if (receipt) return { kind: 'claimed' }
+  const state = component.substate.Component.body.state // [vault, claim_amount, paused, receipts, admin_account]
+  const claimAmount = BigInt(state[1])
+  if (state[2] === true) return { kind: 'paused', claimAmount }
+  const available = BigInt(vault.substate.Vault.resource_container.Stealth.revealed_amount)
+  return available < claimAmount ? { kind: 'empty', claimAmount, available } : { kind: 'open', claimAmount, available }
+}
+
+/**
+ * Claim `claimAmount` µT into `wallet` as a private coin. Works from a zero balance: the fee is paid
+ * out of the claim. Returns the transaction id once it is finalized with Accept.
+ */
+export async function claim(wallet: SecretKeyWallet, claimAmount: bigint): Promise<string> {
+  const network = Network.Esmeralda
+  const ownerPk = await wallet.getPublicKey()
+  const address = await wallet.getAddress()
+  const provider = await IndexerProvider.connect({ url: INDEXER, network })
+  const crypto = new WasmStealthCrypto(network)
+  const maxEpoch = await resolveMaxEpoch(provider, 10)
+
+  // The statement commits to the fee, so the transaction is built once to price it and once to send.
+  async function build(fee: bigint, dryRun: boolean) {
+    const { statement: outputs, outputMask } = await crypto.generateOutputsStatement(
+      [createOutput({ destination: address, amount: claimAmount - fee, resourceAddress: TARI_RESOURCE_ADDRESS })],
+      { amount: fee, receiver: ownerPk }, // the fee slice, paid below
+    )
+    const inputs = await crypto.buildInputsStatement([], claimAmount) // the claim bucket is the only input
+    const proof = await signBalanceProof(crypto, Mask.zero(), outputMask, inputs, outputs)
+    const statement = new StealthTransferStatement(inputs, outputs, proof)
+    const tx = new TransactionBuilder(network, maxEpoch)
+      .withFeeInstructionsBuilder((b) => b
+        .callMethod({ componentAddress: FAUCET, methodName: 'claim' }, [publicKeyLiteral(ownerPk)])
+        .saveVar('payout')
+        .addInstruction(stealthTransferInstruction(
+          { resourceAddress: TARI_RESOURCE_ADDRESS, revealedInputBucket: 'payout', statement },
+          (name) => b.resolveWorkspaceOffsetId(name),
+        ))
+        .saveVar('fee')
+        .addInstruction({ PayFeeFromBucket: { bucket: b.resolveWorkspaceOffsetId('fee') } }))
+      .withInputs([
+        { substate_id: FAUCET, version: null },
+        { substate_id: VAULT, version: null },
+        { substate_id: RECEIPTS, version: null },
+      ])
+      .buildUnsignedTransaction()
+    // Signed by the claiming key — claim() refuses anyone else. dry_run rides inside the envelope.
+    return sealTransaction(await signTransaction([wallet], dryRun ? { ...tx, dry_run: true } : tx))
+  }
+
+  // 1. Dry run with a generous fee. A refusal (already claimed, paused, empty) shows up here, free.
+  const res = await fetch(`${INDEXER}/transactions/dry-run`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ transaction: await build(50_000n, true) }),
+  })
+  const finalize = (await res.json())?.result?.finalize
+  if (finalize?.result?.Accept === undefined) {
+    throw new Error(`Claim refused: ${JSON.stringify(finalize?.result ?? `HTTP ${res.status}`)}`)
+  }
+  const receipt = finalize.fee_receipt
+  const fee = ((BigInt(receipt.total_fees_paid) - BigInt(receipt.total_fee_overcharge)) * 125n) / 100n // +25%
+
+  // 2. Submit for real, then wait for the verdict. Only Accept means the coin landed.
+  const { transaction_id: txId } = await provider.submitTransaction(await build(fee, false))
+  try {
+    for (let i = 0; i < 60; i++) {
+      await sleep(3000)
+      const { result } = await provider.getTransactionResult(txId).catch(() => ({ result: 'Pending' as const }))
+      if (result === 'Pending') continue
+      if ('Rejected' in result) throw new Error(`Claim rejected: ${result.Rejected.details}`)
+      const outcome = result.Finalized.execution_result?.finalize.result
+      if (outcome && 'Accept' in outcome) return txId
+      throw new Error(`Claim did not succeed: ${JSON.stringify(outcome ?? result.Finalized.final_decision)}`)
+    }
+    throw new Error(`No verdict yet for ${txId}. Check its status before claiming again.`)
+  } finally {
+    provider.stopWatcher()
+  }
+}
+```
+
+Usage:
+
+```ts
+import { Network } from '@tari-project/ootle'
+import { SecretKeyWallet } from '@tari-project/ootle-secret-key-wallet'
+
+const wallet = SecretKeyWallet.randomWithViewKey(Network.Esmeralda) // or your user's wallet
+const status = await faucetStatus(await wallet.getPublicKey())
+if (status.kind === 'open') console.log('claim tx', await claim(wallet, status.claimAmount))
+```
+
 ## Methods
 
 | method | who | what |
@@ -134,8 +295,14 @@ the wallet daemon. It is not byte-identical to the `cargo build` output.
 Created with [`scripts/instantiate.py`](scripts/instantiate.py), which dry-runs `new()` before submitting
 it and requires a final Accept. It started empty and unpaused.
 
-**Funding:** 100,000 tTARI deposited from the deployer account on 2026-10-02, tx
-`0fae01fec6b8d15df1b0e2898ba07efac45427d2e345fa0bf386a0ff15dbb487` (Commit / Accept, fee 2,016 µT).
+**Funding:** 598,000 tTARI on 2026-10-04.
+
+| date | deposit | tx |
+|---|---|---|
+| 2026-10-02 | 100,000 tTARI | `0fae01fec6b8d15df1b0e2898ba07efac45427d2e345fa0bf386a0ff15dbb487` (Accept, fee 2,016 µT) |
+| 2026-10-04 | 500,000 tTARI | `ea94bedd825c18e2dd4e325c465d3c290e3e34513399244a8e1ca7d6ee0dcae9` (Accept, fee 2,016 µT) |
+
+Between the two, claims took it from 100,000 to 98,000 tTARI.
 
 ## License
 
