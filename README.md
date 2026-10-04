@@ -4,7 +4,7 @@ A testnet **TARI faucet** for the [Tari Ootle](https://ootle.tari.com) network, 
 template. It is what [Caravel](https://github.com/okansaglam016161-pixel/caravel) uses to give new
 wallets test funds, and anyone can use or fund it.
 
-> **Testnet only.** It hands out test TARI on esmeralda. It is not designed for value.
+> **Testnet only.** It hands out test TARI on Ootle 0.43 on esmeralda testnet. It is not designed for value.
 
 ## Rules
 
@@ -251,14 +251,13 @@ Anyone can top it up with a transaction that withdraws TARI from their account a
   or empty, and nothing once the wallet has claimed.
 
 The code is in Caravel's
-[`src/crypto/faucet.ts`](https://github.com/okansaglam016161-pixel/caravel/blob/ootle-0.42/src/crypto/faucet.ts)
-and [`src/crypto/faucetStatus.ts`](https://github.com/okansaglam016161-pixel/caravel/blob/ootle-0.42/src/crypto/faucetStatus.ts).
+[`src/crypto/faucet.ts`](https://github.com/okansaglam016161-pixel/caravel/blob/main/src/crypto/faucet.ts)
+and [`src/crypto/faucetStatus.ts`](https://github.com/okansaglam016161-pixel/caravel/blob/main/src/crypto/faucetStatus.ts).
 
 ## Build & test
 
-The template is in [`template/`](template/), built with `tari_template_lib`
-0.33 and `tari_ootle_template_build` 0.13, and tested with the Ootle 0.43 test tooling
-(`tari_template_test_tooling` 0.43).
+The template is in [`template/`](template/). Built with `tari_template_lib` 0.33 and
+`tari_ootle_template_build` 0.13; tested with the Ootle 0.43 test tooling (`tari_template_test_tooling` 0.43).
 
 ```bash
 cd template
