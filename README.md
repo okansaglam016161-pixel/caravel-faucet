@@ -4,7 +4,7 @@ A testnet **TARI faucet** for the [Tari Ootle](https://ootle.tari.com) network, 
 template. It is what [Caravel](https://github.com/okansaglam016161-pixel/caravel) uses to give new
 wallets test funds, and anyone can use or fund it.
 
-> **Testnet only.** It hands out test TARI on Ootle 0.43 on esmeralda testnet. It is not designed for value.
+> **Testnet only.** It hands out test TARI on Ootle 0.45 (protocol V1) on esmeralda testnet. It is not designed for value.
 
 ## Rules
 
@@ -259,7 +259,7 @@ and [`src/crypto/faucetStatus.ts`](https://github.com/okansaglam016161-pixel/car
 The template is in [`template/`](template/). Built with `tari_template_lib` 0.34 and
 `tari_ootle_template_build` 0.14; tested with the Ootle 0.45 test tooling (`tari_template_test_tooling` 0.45).
 The deployed template is not rebuilt by a tooling bump: it is still the one published on Ootle 0.42 (see
-[Live deployment](#live-deployment--published-on-ootle-042-running-on-043-re-verified-live-on-043)).
+[Live deployment](#live-deployment--published-on-ootle-042-running-on-045-re-verified-live-on-045)).
 
 ```bash
 cd template
@@ -267,7 +267,7 @@ cargo test                                              # local logic tests
 cargo build --release --target wasm32-unknown-unknown   # the WASM to publish
 ```
 
-## Live deployment — published on Ootle 0.42, running on 0.43 (re-verified live on 0.43)
+## Live deployment — published on Ootle 0.42, running on 0.45 (re-verified live on 0.45)
 
 Published on **esmeralda** on 2026-10-02 (epoch 11752).
 
