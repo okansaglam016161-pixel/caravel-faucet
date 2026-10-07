@@ -256,8 +256,10 @@ and [`src/crypto/faucetStatus.ts`](https://github.com/okansaglam016161-pixel/car
 
 ## Build & test
 
-The template is in [`template/`](template/). Built with `tari_template_lib` 0.33 and
-`tari_ootle_template_build` 0.13; tested with the Ootle 0.43 test tooling (`tari_template_test_tooling` 0.43).
+The template is in [`template/`](template/). Built with `tari_template_lib` 0.34 and
+`tari_ootle_template_build` 0.14; tested with the Ootle 0.45 test tooling (`tari_template_test_tooling` 0.45).
+The deployed template is not rebuilt by a tooling bump: it is still the one published on Ootle 0.42 (see
+[Live deployment](#live-deployment--published-on-ootle-042-running-on-043-re-verified-live-on-043)).
 
 ```bash
 cd template
