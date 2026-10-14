@@ -51,12 +51,12 @@ Refusals, as they appear in the dry run's reject reason:
 | `Faucet is empty` | less than one claim is left |
 | `unknown or out of scope signer badge` | the transaction was not signed by the claiming key |
 
-TypeScript, `@tari-project/ootle` 0.7 (type-checked against the SDK, and the status read and dry run
-checked live from a fresh empty wallet):
+TypeScript, `@tari-project/ootle` 0.9 with `@tari-project/ootle-wasm` 0.46 (type-checked against the SDK, and
+the status read and dry run checked live from a fresh empty wallet):
 
 ```ts
-// Caravel Faucet — status + claim, for any dapp on Ootle esmeralda.
-// npm i @tari-project/ootle@^0.7 @tari-project/ootle-indexer@^0.7 @tari-project/ootle-secret-key-wallet@^0.7
+// Caravel Faucet: status + claim, for any dapp on Ootle esmeralda.
+// npm i @tari-project/ootle@^0.9 @tari-project/ootle-indexer@^0.9 @tari-project/ootle-secret-key-wallet@^0.9 @tari-project/ootle-wasm@^0.46.1
 import {
   Mask, Network, StealthTransferStatement, TARI_RESOURCE_ADDRESS, TransactionBuilder, WasmStealthCrypto,
   createOutput, publicKeyLiteral, resolveMaxEpoch, sealTransaction, signBalanceProof, signTransaction,
@@ -139,7 +139,7 @@ export async function claim(wallet: SecretKeyWallet, claimAmount: bigint): Promi
         { substate_id: RECEIPTS, version: null },
       ])
       .buildUnsignedTransaction()
-    // Signed by the claiming key — claim() refuses anyone else. dry_run rides inside the envelope.
+    // Signed by the claiming key: claim() refuses anyone else. dry_run rides inside the envelope.
     return sealTransaction(await signTransaction([wallet], dryRun ? { ...tx, dry_run: true } : tx))
   }
 
@@ -259,7 +259,7 @@ and [`src/crypto/faucetStatus.ts`](https://github.com/okansaglam016161-pixel/car
 The template is in [`template/`](template/). Built with `tari_template_lib` 0.34 and
 `tari_ootle_template_build` 0.15; tested with the Ootle 0.46 test tooling (`tari_template_test_tooling` 0.46).
 The deployed template is not rebuilt by a tooling bump: it is still the one published on Ootle 0.42 (see
-[Live deployment](#live-deployment-published-on-ootle-042-running-on-046-reads-and-dry-runs-re-verified-on-046)).
+[Live deployment](#live-deployment-published-on-ootle-042-running-on-046-re-verified-live-on-046)).
 
 ```bash
 cd template
@@ -267,7 +267,7 @@ cargo test                                              # local logic tests
 cargo build --release --target wasm32-unknown-unknown   # the WASM to publish
 ```
 
-## Live deployment: published on Ootle 0.42, running on 0.46 (reads and dry runs re-verified on 0.46)
+## Live deployment: published on Ootle 0.42, running on 0.46 (re-verified live on 0.46)
 
 Published on **esmeralda** on 2026-10-02 (epoch 11752).
 
